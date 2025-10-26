@@ -1,6 +1,6 @@
-# LangGraph Documentation Agent
+# LangGraph Helper Agent
 
-Hey! This is a documentation agent I built to answer questions about LangGraph and LangChain. It's designed to give you quick, code-first answers without all the fluff you'd normally get from an LLM.
+Hey! This is a helper agent I built to answer questions about LangGraph and LangChain. It's designed to give you quick, code-first answers without all the fluff you'd normally get from an LLM.
 
 <p align="center">
   <img src="architecture/arch.png" alt="Architecture Diagram" width="800">
@@ -124,6 +124,14 @@ Documentation search is usually either too broad (LLMs hallucinate) or too narro
 
 The LangGraph workflow makes it easy to swap retrievers, adjust prompts, or add new query types without touching the core logic. And running everything locally means no vendor lock-in or API dependencies if you don't want them.
 
----
+## Resources to explore
 
-Built with LangGraph, BM25, Ollama, Google Gemini, and Tavily Search.
+Here are some great resources to expand your understanding:
+
+If you're new to LangGraph, start with the [official docs](https://langchain-ai.github.io/langgraph/) and [LangChain Academy](https://academy.langchain.com/) has free courses that are actually pretty good. The [LangGraph repo](https://github.com/langchain-ai/langgraph) has solid examples in the examples folder if you learn better from code.
+
+For RAG systems, check out the [RAG from Scratch](https://github.com/langchain-ai/rag-from-scratch) video series. If you want to understand why BM25 works, [this Elastic post](https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables) breaks it down well. For more sophisticated retrieval, [ChromaDB](https://www.trychroma.com/) and [FAISS](https://github.com/facebookresearch/faiss) are worth exploring once you outgrow BM25.
+
+Running models locally is easier than you think. [Ollama](https://github.com/ollama/ollama/tree/main/docs) is what I use here.
+
+If you need better search, [Tavily](https://tavily.com/) is optimized for LLM retrieval. 
