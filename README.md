@@ -26,6 +26,8 @@ Want to use online mode? Create a `.env` file with your Tavily API key:
 
 ```bash
 TAVILY_API_KEY=...
+# Optional: Use Google's Gemini(uncomment to enable)
+# GOOGLE_API_KEY=...
 ```
 
 Tavily is free tier - sign up at [tavily.com](https://tavily.com/) for 1000 searches per month.
