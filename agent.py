@@ -27,7 +27,7 @@ except:
 
 
 # ============================================================
-# STATE (Official Pattern)
+# STATE
 # ============================================================
 
 class AgentState(dict):
@@ -40,7 +40,7 @@ class AgentState(dict):
 # ============================================================
 
 class Agent:
-    """Autonomous Agentic RAG following official LangGraph pattern"""
+    """ Agentic RAG """
     
     def __init__(self, mode="offline", google_api_key=None, tavily_api_key=None, verbose=False):
         """Initialize agent (minimal setup)"""
@@ -137,7 +137,7 @@ class Agent:
         return True
     
     def load_vectorstore(self):
-        """Load Chroma (lazy)"""
+        """Load Chroma """
         if self.vectorstore is None:
             if not self.chroma_dir.exists():
                 raise FileNotFoundError("Run agent.build_index() first")
@@ -181,7 +181,7 @@ class Agent:
     # ============================================================
     
     def create_retriever_tool(self):
-        """Create retriever tool (official pattern with lazy loading)"""
+        """Create retriever tool """
         # Lazy load: don't load vectorstore until tool is actually called
         def get_retriever():
             vectorstore = self.load_vectorstore()
