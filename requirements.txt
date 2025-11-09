@@ -2,9 +2,11 @@
 langchain>=0.1.0
 langchain-community>=0.0.20
 langchain-core>=0.1.23
-langchain-google-genai>=0.0.6
 langgraph>=0.0.20
 langchainhub>=0.1.14  # For LangChain hub prompts
+
+# Optional: For Google Gemini (uncomment if using GOOGLE_API_KEY)
+# langchain-google-genai>=0.0.6
 
 # Ollama for offline mode
 ollama>=0.1.0

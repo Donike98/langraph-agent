@@ -53,12 +53,18 @@ def get_mode(args):
 
 def validate_api_keys(mode):
     """Validate required API keys for the selected mode."""
+    tavily_key = None
+    google_key = None
+    
     if mode == 'online':
-        key = os.getenv('TAVILY_API_KEY')
-        if not key:
+        tavily_key = os.getenv('TAVILY_API_KEY')
+        if not tavily_key:
             sys.exit("Error: TAVILY_API_KEY required for online mode (add to .env)")
-        return key
-    return None
+    
+    # Optional: Google API key for using Gemini instead of Ollama
+    # google_key = os.getenv('GOOGLE_API_KEY')
+    
+    return tavily_key, google_key
 
 
 def main():
@@ -66,10 +72,10 @@ def main():
     load_dotenv()
     args = parse_args()
     mode = get_mode(args)
-    tavily_key = validate_api_keys(mode)
+    tavily_key, google_key = validate_api_keys(mode)
     
     try:
-        agent = Agent(mode=mode, tavily_api_key=tavily_key, verbose=args.verbose)
+        agent = Agent(mode=mode, tavily_api_key=tavily_key, google_api_key=google_key, verbose=args.verbose)
         
         # Refresh index if requested (offline mode only)
         if args.refresh and mode == "offline":

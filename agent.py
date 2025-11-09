@@ -63,6 +63,17 @@ class Agent:
             self.embeddings = None  # Not needed for online mode
         
         # LLM (use local LLM for both modes - official adaptive RAG pattern)
+        # Optional: Use Google's Gemini if API key is provided
+        # if google_api_key:
+        #     from langchain_google_genai import ChatGoogleGenerativeAI
+        #     self.llm = ChatGoogleGenerativeAI(
+        #         model="gemini-1.5-flash",
+        #         google_api_key=google_api_key,
+        #         temperature=0.3
+        #     )
+        #     if self.verbose:
+        #         print("Using Google Gemini")
+        # else:
         from langchain_community.chat_models import ChatOllama
         self.llm = ChatOllama(model="llama3.2:latest", temperature=0.3)
         
