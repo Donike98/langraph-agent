@@ -4,13 +4,17 @@ langchain-community>=0.0.20
 langchain-core>=0.1.23
 langchain-google-genai>=0.0.6
 langgraph>=0.0.20
+langchainhub>=0.1.14  # For LangChain hub prompts
 
 # Ollama for offline mode
 ollama>=0.1.0
 
-# Search and retrieval
-rank-bm25>=0.2.2
+# Search and retrieval - Chroma vector store (official pattern)
 tavily-python>=0.3.0
+chromadb>=0.4.0  # Vector store (following official LangGraph example)
+langchain-text-splitters>=0.0.1  # Document splitting
+tiktoken>=0.5.0  # For from_tiktoken_encoder (official pattern)
+sentence-transformers>=2.2.0  # For HuggingFaceEmbeddings (offline mode)
 
 # Utilities
 python-dotenv>=1.0.0

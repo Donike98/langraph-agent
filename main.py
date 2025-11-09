@@ -1,92 +1,87 @@
 #!/usr/bin/env python3
-"""LangGraph Documentation Agent - Main CLI"""
+"""LangGraph Agentic RAG - CLI Interface"""
 import os
 import sys
-import argparse
-from dotenv import load_dotenv
-from agent import Agent 
 
-def main(): 
-    # Load .env configuration
-    load_dotenv()
-    # Parse arguments
+# Suppress all warnings at the earliest point
+os.environ['PYTHONWARNINGS'] = 'ignore'
+os.environ.setdefault('USER_AGENT', 'langraph-agent')
+
+import argparse
+import warnings
+from dotenv import load_dotenv
+
+warnings.filterwarnings('ignore')
+
+from agent import Agent
+
+
+def parse_args():
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description='LangGraph Documentation Agent',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-                Examples:
-                python main.py --offline "How do I use checkpointers?"
-                python main.py --online "Latest features?"
-                
-                Or set environment variable:
-                export AGENT_MODE=offline
-                python main.py "How do I use checkpointers?"
-        """
+        description='LangGraph Agentic RAG System',
+        epilog='Examples:\n'
+               '  %(prog)s --offline "What is StateGraph?"\n'
+               '  %(prog)s --online "What is AI?" --verbose',
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
     parser.add_argument('query', help='Your question')
-    parser.add_argument('--online', action='store_true', help='Use online mode (Tavily+Gemini)')
-    parser.add_argument('--offline', action='store_true', help='Use offline mode (BM25+Ollama)')
-    
-    args = parser.parse_args()
-    
-    # Check for conflicting flags
+    parser.add_argument('--online', action='store_true', help='Web search mode (Tavily+Ollama)')
+    parser.add_argument('--offline', action='store_true', help='Vector store mode (ChromaDB+Ollama)')
+    parser.add_argument('--verbose', action='store_true', help='Show debug output')
+    parser.add_argument('--refresh', action='store_true', help='Refresh docs')
+    return parser.parse_args()
+
+
+def get_mode(args):
+    """Determine operational mode from arguments or environment."""
     if args.online and args.offline:
-        print("Error: Cannot use both --online and --offline flags")
-        sys.exit(1)
+        sys.exit("Error: Cannot specify both --online and --offline")
     
-    # Check for API keys
-    google_api_key = os.getenv('GOOGLE_API_KEY')
-    tavily_api_key = os.getenv('TAVILY_API_KEY')
-    
-    # Determine mode: flags take priority over env var
     if args.online:
-        mode = 'online'
-        if not google_api_key or not tavily_api_key:
-            print(" Online mode requires GOOGLE_API_KEY and TAVILY_API_KEY in .env")
-            sys.exit(1)
-    elif args.offline:
-        mode = 'offline'
-    else:
-        # Check AGENT_MODE env var
-        agent_mode_env = os.getenv('AGENT_MODE', '').lower()
-        if agent_mode_env == 'online':
-            mode = 'online'
-            if not google_api_key or not tavily_api_key:
-                print(" Online mode requires GOOGLE_API_KEY and TAVILY_API_KEY in .env")
-                sys.exit(1)
-        elif agent_mode_env == 'offline':
-            mode = 'offline'
-        else:
-            # No mode specified - require explicit choice
-            print("Error: Please specify a mode:")
-            print("  --online    Use online mode (Tavily+Gemini)")
-            print("  --offline   Use offline mode (BM25+Ollama)")
-            print("  Or set: export AGENT_MODE=online|offline")
-            sys.exit(1)
+        return 'online'
+    if args.offline:
+        return 'offline'
     
-    # Initialize agent
-    try:
-        agent = Agent(
-            google_api_key=google_api_key,
-            mode=mode,
-            tavily_api_key=tavily_api_key
-        )
-    except Exception as e:
-        print(f"Error initializing agent: {e}")
-        sys.exit(1)
+    # Fallback to environment variable
+    mode = os.getenv('AGENT_MODE', '').lower()
+    if mode in ('online', 'offline'):
+        return mode
     
-    # Run query
+    sys.exit("Error: Specify mode with --online or --offline")
+
+
+def validate_api_keys(mode):
+    """Validate required API keys for the selected mode."""
+    if mode == 'online':
+        key = os.getenv('TAVILY_API_KEY')
+        if not key:
+            sys.exit("Error: TAVILY_API_KEY required for online mode (add to .env)")
+        return key
+    return None
+
+
+def main():
+    """Main entry point."""
+    load_dotenv()
+    args = parse_args()
+    mode = get_mode(args)
+    tavily_key = validate_api_keys(mode)
+    
     try:
+        agent = Agent(mode=mode, tavily_api_key=tavily_key, verbose=args.verbose)
+        
+        # Refresh index if requested (offline mode only)
+        if args.refresh and mode == "offline":
+            agent.refresh_index()
+        
         result = agent.run(args.query)
         print(f"\n{result['response']}\n")
     except KeyboardInterrupt:
-        print("\n\n Interrupted")
-        sys.exit(0)
+        sys.exit("\n\n Interrupted")
     except Exception as e:
-        print(f" Error: {e}")
-        sys.exit(1)
+        sys.exit(f" Error: {e}")
+
 
 if __name__ == "__main__":
     main()
-

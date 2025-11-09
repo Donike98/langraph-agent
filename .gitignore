@@ -44,3 +44,7 @@ agent.log
 # data/processed/
 # data/raw/
 
+# ChromaDB (generated artifact)
+data/processed/chroma_db/
+data/processed/metadata.json
+

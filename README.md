@@ -1,20 +1,18 @@
 # LangGraph Helper Agent
 
-Hey! This is a helper agent I built to answer questions about LangGraph and LangChain. It's designed to give you quick, code-first answers without all the fluff you'd normally get from an LLM.
+![Architecture](architecture/arch.png)
 
-<p align="center">
-  <img src="architecture/arch.png" alt="Architecture Diagram" width="800">
-</p>
+Hey! This is a helper agent I built to answer questions about LangGraph and LangChain. It's designed to give you quick, code-first answers without all the fluff you'd normally get from an LLM.
 
 ## What it does?
 
 The agent works in two modes depending on what you need:
 
-**Offline mode** uses BM25 search on locally downloaded docs with Ollama (llama3.2). Great when you're on a plane or just want fast, consistent answers without burning through API credits.
+**Offline mode** uses ChromaDB vector search on locally downloaded docs with Ollama (llama3.2). Great when you're on a plane or just want fast, consistent answers without burning through API credits.
 
-**Online mode** taps into Tavily's web search and Google's Gemini API. Use this when you need the latest info or when the docs don't have what you're looking for.
+**Online mode** taps into Tavily's web search with local Ollama LLM. Use this when you need the latest info or when the docs don't have what you're looking for.
 
-Behind the scenes, it's a 3-node LangGraph workflow that classifies your question, retrieves relevant context, and synthesizes a clean answer. No hallucination, no citing sources you can't verify - just straight code examples and clear explanations.
+Behind the scenes, it's a clean LangGraph workflow that retrieves relevant context, evaluates it with the LLM, and generates a natural answer. No hallucination, no citing sources you can't verify - just straight code examples and clear explanations.
 
 ## Getting started
 
@@ -24,33 +22,31 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Want to use online mode? Create a `.env` file with your API keys:
+Want to use online mode? Create a `.env` file with your Tavily API key:
 
 ```bash
-GOOGLE_API_KEY=...
 TAVILY_API_KEY=...
 ```
 
-Both are free tier:
-- Gemini: Get your key from [Google AI Studio](https://aistudio.google.com/apikey). Note that this is AI Studio, not Google Cloud or Vertex AI. You get 1500 requests per day.
-- Tavily: Sign up at [tavily.com](https://tavily.com) for 1000 searches per month.
+Tavily is free tier - sign up at [tavily.com](https://tavily.com/) for 1000 searches per month.
 
 Then run with the `--online` flag:
 
 ```bash
-python main.py --online "What are the latest LangGraph features?"
+python main.py --online "What is artificial intelligence?"
 ```
 
 ## Setting up offline mode
 
-If you want to use offline mode, you'll need to download the docs and build a search index:
+If you want to use offline mode, you'll need to download the docs and build a vector store:
 
 ```bash
-python scripts/pull_docs.py
-python scripts/build_index.py
+python setup.py
 ```
 
-You'll also need Ollama installed. Get it from [ollama.com](https://ollama.com/download) (check the [docs](https://github.com/ollama/ollama) for platform-specific installation).
+This downloads LangGraph/LangChain docs and builds a ChromaDB index. Takes about 30 seconds.
+
+You'll also need Ollama installed. Get it from [ollama.com](https://ollama.com/) (works on macOS, Linux, Windows).
 
 Make sure Ollama is running with llama3.2:
 
@@ -67,25 +63,27 @@ You can also use the helper script:
 
 ## How it works
 
-The agent automatically figures out what kind of question you're asking:
+The workflow is simple but effective:
 
-- **How-to questions** get a working code example first, then a brief explanation
-- **Comparison questions** get a clear difference statement plus code for both options
-- **Troubleshooting** gets the fixed code upfront, then why it was broken
-- **Conceptual questions** get a short explanation followed by a minimal example
+1. **Agent** - Entry point, keeps the pattern consistent
+2. **Retrieve/Search** - Gets relevant docs (ChromaDB) or web results (Tavily)
+3. **Evaluate** - LLM decides if the results are relevant with full reasoning
+4. **Generate** - Creates the answer if relevant, otherwise stops
 
-Responses are capped at 40 lines to keep things scannable. No bold formatting, no source citations, no filler text. Just natural language and working code.
+The LLM makes all the routing decisions - no hardcoded rules or keyword matching. This makes it robust and adaptable.
 
 ## Usage examples
 
 ```bash
 # Ask anything about LangGraph/LangChain
-python main.py --offline "StateGraph vs MessageGraph?"
-python main.py --online "Best practices for state management 2025?"
+python main.py --offline "What is StateGraph?"
+python main.py --online "What is machine learning?"
 
-# Or set the mode via environment variable
-export AGENT_MODE=offline
-python main.py "How to handle errors in nodes?"
+# Auto-refresh docs if older than 24 hours
+python main.py --offline "query" --refresh
+
+# Debug mode to see the workflow
+python main.py --offline "StateGraph" --verbose
 ```
 
 ## Project structure
@@ -93,30 +91,69 @@ python main.py "How to handle errors in nodes?"
 ```
 ├── main.py              # CLI entry point
 ├── agent.py             # Core LangGraph workflow
-├── retriever_offline.py # BM25 search
-├── retriever_online.py  # Tavily web search
+├── setup.py             # Index builder
 ├── data/
-│   ├── raw/             # Downloaded docs
-│   └── processed/       # BM25 index
-├── scripts/
-│   ├── pull_docs.py     # Download documentation
-│   └── build_index.py   # Build search index
+│   └── processed/
+│       └── chroma_db/   # Vector store (auto-created)
 └── requirements.txt     # Python dependencies
+```
+
+Everything runs locally. No vendor lock-in, no API dependencies (except for online mode).
+
+## Configuration
+
+Want to tweak things? Everything's in `agent.py`:
+
+**Change the LLM model:**
+```python
+# Line 66
+self.llm = ChatOllama(
+    model="llama3.2:latest",  # Try: mistral, codellama
+    temperature=0.3            # 0 = deterministic, 1 = creative
+)
+```
+
+**Adjust chunk size:**
+```python
+# Line 102
+RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+    chunk_size=100,    # Smaller = more precise
+    chunk_overlap=50   # Keeps context between chunks
+)
+```
+
+**Change retrieval count:**
+```python
+# Line 194
+retriever = vectorstore.as_retriever(
+    search_kwargs={"k": 4}  # Number of docs to retrieve
+)
 ```
 
 ## Troubleshooting
 
 **Offline mode not working?**
 
-Check that Ollama is running (`ollama serve`) and that you've pulled the model (`ollama pull llama3.2:latest`). Also verify the index exists at `data/processed/bm25_index.pkl`.
+Check that Ollama is running (`ollama serve`) and that you've pulled the model (`ollama pull llama3.2:latest`). Also verify the index exists at `data/processed/chroma_db/`.
 
 **Online mode not working?**
 
-Double-check your API keys in `.env`. Make sure you're using the Google AI Studio key, not a Google Cloud key. You can verify your quotas in the Gemini and Tavily dashboards.
+Double-check your `TAVILY_API_KEY` in `.env`. You can verify your quota in the Tavily dashboard.
 
 **Getting "command not found"?**
 
 Make sure you're in the project directory and try `python3 main.py` if `python` doesn't work.
+
+**Want to refresh the docs?**
+
+```bash
+rm -rf data/processed/chroma_db && python setup.py
+```
+
+Or use the built-in refresh:
+```bash
+python main.py --offline "query" --refresh
+```
 
 ## Why I built this?
 
@@ -124,14 +161,63 @@ Documentation search is usually either too broad (LLMs hallucinate) or too narro
 
 The LangGraph workflow makes it easy to swap retrievers, adjust prompts, or add new query types without touching the core logic. And running everything locally means no vendor lock-in or API dependencies if you don't want them.
 
+I also wanted to follow the [official LangGraph patterns](https://github.com/langchain-ai/langgraph/blob/main/examples/rag/langgraph_agentic_rag.ipynb) to learn best practices. This implementation uses ChromaDB for vector storage and LLM-driven evaluation instead of hardcoded rules.
+
+## Tech stack
+
+| What | Tool | Why |
+|------|------|-----|
+| Orchestration | LangGraph | Clean workflow, state management |
+| LLM | Ollama (llama3.2) | Free, local, private |
+| Vector DB | ChromaDB | Lightweight, no server needed |
+| Embeddings | HuggingFace (MiniLM) | Fast, runs locally |
+| Web Search | Tavily | Optimized for LLM retrieval |
+
+Everything runs on your machine. No cloud dependencies (except Tavily for online mode).
+
 ## Resources to explore
 
-Here are some great resources to expand your understanding:
+If you're new to LangGraph, start with the [official docs](https://langchain-ai.github.io/langgraph/) and [LangChain Academy](https://academy.langchain.com/) has free courses that are actually pretty good.
 
-If you're new to LangGraph, start with the [official docs](https://langchain-ai.github.io/langgraph/) and [LangChain Academy](https://academy.langchain.com/) has free courses that are actually pretty good. The [LangGraph repo](https://github.com/langchain-ai/langgraph) has solid examples in the examples folder if you learn better from code.
+For RAG systems, check out the [RAG from Scratch](https://www.youtube.com/playlist?list=PLfaIDFEXuae2LXbO1_PKyVJiQ23ZztA0x) video series.
 
-For RAG systems, check out the [RAG from Scratch](https://github.com/langchain-ai/rag-from-scratch) video series. If you want to understand why BM25 works, [this Elastic post](https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables) breaks it down well. For more sophisticated retrieval, [ChromaDB](https://www.trychroma.com/) and [FAISS](https://github.com/facebookresearch/faiss) are worth exploring once you outgrow BM25.
+Running models locally is easier than you think. [Ollama](https://ollama.com/) is what I use here - just works.
 
-Running models locally is easier than you think. [Ollama](https://github.com/ollama/ollama/tree/main/docs) is what I use here.
+For vector databases, [ChromaDB](https://docs.trychroma.com/) and [FAISS](https://github.com/facebookresearch/faiss) are worth exploring.
 
-If you need better search, [Tavily](https://tavily.com/) is optimized for LLM retrieval. 
+## Performance
+
+Quick benchmarks on my MacBook (M1, 16GB):
+
+| Operation | Time |
+|-----------|------|
+| Index build | ~30s |
+| Query (offline) | 2-3s |
+| Query (online) | 3-5s |
+| Memory usage | ~4.5GB |
+
+Not optimized for speed yet - this is a learning project. But it's fast enough for daily use.
+
+## What's next?
+
+Some ideas I'm exploring:
+
+- [ ] Async I/O for parallel operations
+- [ ] Conversation history (multi-turn)
+- [ ] Better embeddings (fine-tuned for docs)
+- [ ] Streaming responses
+- [ ] Web UI
+
+Feel free to fork and experiment!
+
+## Contributing
+
+This is a personal learning project, but if you find bugs or have suggestions, open an issue. PRs welcome if you want to add features.
+
+## License
+
+MIT - do whatever you want with it.
+
+---
+
+**Built with**: LangGraph • LangChain • ChromaDB • Ollama • Tavily
