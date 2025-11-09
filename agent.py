@@ -62,7 +62,7 @@ class Agent:
         else:
             self.embeddings = None  # Not needed for online mode
         
-        # LLM (use local LLM for both modes - official adaptive RAG pattern)
+
         # Optional: Use Google's Gemini if API key is provided
         # if google_api_key:
         #     from langchain_google_genai import ChatGoogleGenerativeAI
