@@ -83,7 +83,7 @@ python main.py --online "What is machine learning?"
 python main.py --offline "query" --refresh
 
 # Debug mode to see the workflow
-python main.py --offline "StateGraph" --verbose
+python main.py --offline "What is StateGraph?" --verbose
 ```
 
 ## Project structure
@@ -184,40 +184,5 @@ For RAG systems, check out the [RAG from Scratch](https://www.youtube.com/playli
 Running models locally is easier than you think. [Ollama](https://ollama.com/) is what I use here - just works.
 
 For vector databases, [ChromaDB](https://docs.trychroma.com/) and [FAISS](https://github.com/facebookresearch/faiss) are worth exploring.
-
-## Performance
-
-Quick benchmarks on my MacBook (M1, 16GB):
-
-| Operation | Time |
-|-----------|------|
-| Index build | ~30s |
-| Query (offline) | 2-3s |
-| Query (online) | 3-5s |
-| Memory usage | ~4.5GB |
-
-Not optimized for speed yet - this is a learning project. But it's fast enough for daily use.
-
-## What's next?
-
-Some ideas I'm exploring:
-
-- [ ] Async I/O for parallel operations
-- [ ] Conversation history (multi-turn)
-- [ ] Better embeddings (fine-tuned for docs)
-- [ ] Streaming responses
-- [ ] Web UI
-
-Feel free to fork and experiment!
-
-## Contributing
-
-This is a personal learning project, but if you find bugs or have suggestions, open an issue. PRs welcome if you want to add features.
-
-## License
-
-MIT - do whatever you want with it.
-
----
 
 **Built with**: LangGraph • LangChain • ChromaDB • Ollama • Tavily
