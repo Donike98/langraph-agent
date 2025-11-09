@@ -68,5 +68,3 @@ ollama list
 echo ""
 echo "To run the agent in offline mode:"
 echo "  export AGENT_MODE=offline"
-
-
