@@ -29,11 +29,6 @@ TAVILY_API_KEY=...
 ```
 
 Tavily is free tier - sign up at [tavily.com](https://tavily.com/) for 1000 searches per month.
-
-Then run with the `--online` flag:
-
-```bash
-python main.py --online "What is artificial intelligence?"
 ```
 
 ## Setting up offline mode
