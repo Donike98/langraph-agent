@@ -61,20 +61,25 @@ class Agent:
         else:
             self.embeddings = None  # Not needed for online mode
         
-
-        # Optional: Use Google's Gemini if API key is provided
-        # if google_api_key:
-        #     from langchain_google_genai import ChatGoogleGenerativeAI
-        #     self.llm = ChatGoogleGenerativeAI(
-        #         model="gemini-1.5-flash",
-        #         google_api_key=google_api_key,
-        #         temperature=0.3
-        #     )
-        #     if self.verbose:
-        #         print("Using Google Gemini")
-        # else:
-        from langchain_community.chat_models import ChatOllama
-        self.llm = ChatOllama(model="llama3.2:latest", temperature=0.3)
+        # LLM setup based on mode
+        if mode == "offline":
+            # Offline mode: Always use local Ollama
+            from langchain_community.chat_models import ChatOllama
+            self.llm = ChatOllama(model="llama3.2:latest", temperature=0.3)
+        else:
+            # Online mode: Optional Google Gemini, fallback to Ollama
+            # if google_api_key:
+            #     from langchain_google_genai import ChatGoogleGenerativeAI
+            #     self.llm = ChatGoogleGenerativeAI(
+            #         model="gemini-1.5-flash",
+            #         google_api_key=google_api_key,
+            #         temperature=0.3
+            #     )
+            #     if self.verbose:
+            #         print("Using Google Gemini")
+            # else:
+            from langchain_community.chat_models import ChatOllama
+            self.llm = ChatOllama(model="llama3.2:latest", temperature=0.3)
         
         self.vectorstore = None
         self.graph = self.build_graph()
